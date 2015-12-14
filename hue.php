@@ -95,7 +95,7 @@ if ($now > $sunrise_end && $now < $sunset_start) {
 if ($now >= $sunset_start && $now <= $sunset_end) {
 	$du = $sunset_end->getTimestamp() - $sunset_start->getTimestamp();
 	$da = $now->getTimestamp() - $sunset_start->getTimestamp();
-	$ct = round(($cold - $warm) * ($da / $du) + $warm);
+	$ct = round(($cold - $warm) * (1-($da / $du)) + $warm);
 	$hue->set_many($filtered, array('ct' => round(1000000/$ct), 'transitiontime' => 590));
 }
 // late -> red
