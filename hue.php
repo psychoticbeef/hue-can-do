@@ -55,7 +55,7 @@ class Hue {
 		});
 
 		foreach ($filtered as $bulb => $value) {
-			echo $this->set_params($bulb, $params);
+			echo $this->set_params($bulb, $params) . PHP_EOL;
 		}
 	}
 
@@ -63,6 +63,8 @@ class Hue {
 
 
 date_default_timezone_set('Europe/Berlin');
+$settings = parse_ini_file(getenv('HOME') . '/.lights.conf');
+
 
 $now = new DateTime();
 $now_date = $now->format('Y-m-d');
@@ -73,7 +75,7 @@ $sunset_duration = new DateInterval('PT3H');
 $cold = 5000;
 $warm = 2000;
 
-$hue = new Hue('a66c9f867c2a153a1c60ad8cc726607f', 'hue');
+$hue = new Hue($settings['SECRET'], $settings['HUEIP']);
 
 $sunrise_end = clone($sunrise_start);
 $sunset_end = clone($sunset_start);
