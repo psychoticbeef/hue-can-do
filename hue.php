@@ -68,19 +68,21 @@ $settings = parse_ini_file(getenv('HOME') . '/.lights.conf');
 
 $now = new DateTime();
 $now_date = $now->format('Y-m-d');
-$sunrise_start = DateTime::createFromFormat('Y-m-d H:i', $now_date . ' 6:30');
-$sunrise_duration = new DateInterval('PT1H');
-$sunset_start = DateTime::createFromFormat('Y-m-d H:i', $now_date . ' 18:00');
-$sunset_duration = new DateInterval('PT3H');
-$cold = 5000;
-$warm = 2000;
 
-$hue = new Hue($settings['SECRET'], $settings['HUEIP']);
-
+# get sunrise / sunset
+$sunrise_start = DateTime::createFromFormat('Y-m-d H:i', $now_date . ' ' . $settings['SUNRISE_START']);
+$sunrise_duration = new DateInterval('PT' . $settings['SUNRISE_DURATION'] . 'M');
+$sunset_start = DateTime::createFromFormat('Y-m-d H:i', $now_date . ' ' . $settings['SUNSET_START']);
+$sunset_duration = new DateInterval('PT' . $settings['SUNSET_DURATION'] . 'M');
 $sunrise_end = clone($sunrise_start);
 $sunset_end = clone($sunset_start);
 $sunrise_end->add($sunrise_duration);
 $sunset_end->add($sunset_duration);
+
+# get settings
+$cold = $settings['COLD'];
+$warm = $settings['WARM'];
+$hue = new Hue($settings['SECRET'], $settings['HUEIP']);
 
 $target_ct = null;
 
