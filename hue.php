@@ -49,7 +49,12 @@ class Hue {
 	}
 
 	public function set_many($bulbs, $params) {
-		foreach ($bulbs as $bulb => $value) {
+		$filtered = array_filter($bulbs, function($k) use ($params) {
+//			echo '|' . $k['state']['ct'] . '| |' . $params['ct'] . '|' . PHP_EOL;
+			return $k['state']['ct'] != $params['ct'];
+		});
+
+		foreach ($filtered as $bulb => $value) {
 			echo $this->set_params($bulb, $params);
 		}
 	}
@@ -69,39 +74,43 @@ $cold = 5000;
 $warm = 2000;
 
 $hue = new Hue('a66c9f867c2a153a1c60ad8cc726607f', 'hue');
-$config = $hue->get_current_config();
-$filtered = array_filter($config, function($k) {
-	// find lights that are turned on, can change color temperature, where a color temperature is actually set, and which is currently reachable
-	return $k['state']['on'] === true && $k['type'] === 'Extended color light' && $k['state']['colormode'] === 'ct' && $k['state']['reachable'] === true;
-});
 
 $sunrise_end = clone($sunrise_start);
 $sunset_end = clone($sunset_start);
 $sunrise_end->add($sunrise_duration);
 $sunset_end->add($sunset_duration);
+
+$target_ct = null;
+
 // 'night' -> red
 if ($now < $sunrise_start) {
-	$hue->set_many($filtered, array('ct' => round(1000000/$warm), 'transitiontime' => 590));
+	$target_ct = $warm;
 }
 // it's sunrise time -- scripted elsewhere. do nothing
 if ($now >= $sunrise_start && $now <= $sunrise_end) {
-	exit;
 }
 // after waking up -> blue
 if ($now > $sunrise_end && $now < $sunset_start) {
-	$hue->set_many($filtered, array('ct' => round(1000000/$cold), 'transitiontime' => 590));
+	$target_ct = $cold;
 }
 // interpolate
 if ($now >= $sunset_start && $now <= $sunset_end) {
 	$du = $sunset_end->getTimestamp() - $sunset_start->getTimestamp();
 	$da = $now->getTimestamp() - $sunset_start->getTimestamp();
-	$ct = round(($cold - $warm) * (1-($da / $du)) + $warm);
-	$hue->set_many($filtered, array('ct' => round(1000000/$ct), 'transitiontime' => 590));
+	$target_ct = round(($cold - $warm) * (1-($da / $du)) + $warm);
 }
 // late -> red
 if ($now > $sunset_end) {
-	$hue->set_many($filtered, array('ct' => round(1000000/$warm), 'transitiontime' => 590));
+	$target_ct = $warm;
 }
 
-
+if ($target_ct === null) {
+	exit;
+}
+$config = $hue->get_current_config();
+$filtered = array_filter($config, function($k) {
+	// find lights that are turned on, can change color temperature, where a color temperature is actually set, and which is currently reachable
+	return $k['state']['on'] === true && $k['type'] === 'Extended color light' && $k['state']['colormode'] === 'ct' && $k['state']['reachable'] === true && $k['state']['ct'] != $params['ct'];
+});
+$hue->set_many($filtered, array('ct' => round(1000000/$target_ct), 'transitiontime' => 590));
 
