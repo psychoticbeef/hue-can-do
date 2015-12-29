@@ -114,7 +114,7 @@ if ($target_ct === null) {
 $config = $hue->get_current_config();
 $filtered = array_filter($config, function($k) {
 	// find lights that are turned on, can change color temperature, where a color temperature is actually set, and which is currently reachable
-	return $k['state']['on'] === true && $k['type'] === 'Extended color light' && $k['state']['colormode'] === 'ct' && $k['state']['reachable'] === true;
+	return $k['state']['on'] === true && ($k['type'] === 'Extended color light' || $k['type'] === 'Color temperature light') && $k['state']['colormode'] === 'ct' && $k['state']['reachable'] === true;
 });
 $hue->set_many($filtered, array('ct' => round(1000000/$target_ct), 'transitiontime' => 590));
 
